@@ -1,7 +1,7 @@
 package scheduler
 
 import com.google.inject.Provides
-import org.apache.pekko.actor.typed.Behavior
+import org.apache.pekko.actor.typed.{ActorRef, Behavior}
 import org.apache.pekko.actor.typed.scaladsl.Behaviors
 import play.api.libs.concurrent.ActorModule
 
@@ -15,14 +15,24 @@ object SampleActor extends ActorModule {
 
   @Provides
   def create(sampleService: SampleService): Behavior[SampleActorMessage] =
-    Behaviors.receiveMessage {
-      case Hello =>
-        println("SampleActor received Hello.")
-        sampleService.exec()
-        Behaviors.same
+    Behaviors.receiveMessage { case Hello =>
+      println("SampleActor received Hello.")
+      sampleService.exec()
+      Behaviors.same
     }
 }
 
-class SampleService @Inject()() {
+class SampleService @Inject() () {
   def exec(): Unit = println("SampleService was executed.")
+}
+
+class SampleActorScheduler @Inject() (
+    schedulerSetting: SchedulerSetting,
+    sampleActor: ActorRef[SampleActor.SampleActorMessage]
+) {
+  schedulerSetting.scheduler.scheduleTyped(
+    "SampleActorConfig",
+    sampleActor,
+    SampleActor.Hello
+  )
 }
