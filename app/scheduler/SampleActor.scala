@@ -1,9 +1,9 @@
 package scheduler
 
-import com.google.inject.Provides
-import org.apache.pekko.actor.typed.{ActorRef, Behavior}
+import com.google.inject.{AbstractModule, Provides}
 import org.apache.pekko.actor.typed.scaladsl.Behaviors
-import play.api.libs.concurrent.ActorModule
+import org.apache.pekko.actor.typed.{ActorRef, Behavior}
+import play.api.libs.concurrent.{ActorModule, PekkoGuiceSupport}
 
 import javax.inject.Inject
 
@@ -31,8 +31,15 @@ class SampleActorScheduler @Inject() (
     sampleActor: ActorRef[SampleActor.SampleActorMessage]
 ) {
   schedulerSetting.scheduler.scheduleTyped(
-    "SampleActorConfig",
+    "Every5Seconds",
     sampleActor,
     SampleActor.Hello
   )
+}
+
+class SampleActorModule extends AbstractModule with PekkoGuiceSupport {
+  override def configure(): Unit = {
+    bindTypedActor(SampleActor, "SampleActor")
+    bind(classOf[SampleActorScheduler]).asEagerSingleton()
+  }
 }
